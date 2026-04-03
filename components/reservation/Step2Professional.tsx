@@ -3,7 +3,7 @@
 import * as React from "react";
 import { motion } from "framer-motion";
 import { Professional } from "./types";
-import { UserCircle, Loader2, Star } from "lucide-react";
+import { UserCircle, Loader2, Star, Award, Check } from "lucide-react";
 import { api } from "@/lib/api";
 import { useState, useEffect } from "react";
 
@@ -22,26 +22,24 @@ export function Step2Professional({ selectedProfessional, onSelect }: Step2Profe
             try {
                 setLoading(true);
                 const response = await api.get("/providers");
-                
-                // Məlumatın nə formatda gəldiyini görmək üçün Konsola çıxarırıq (F12 basıb baxa bilərsiniz)
-                console.log("Backend-dən gələn usta məlumatı:", response);
-                
-                let providersList: Professional[] = [];
 
-                // Formatları tək-tək yoxlayırıq:
+                let providersList: any[] = [];
+
                 if (response && Array.isArray(response.data)) {
-                    // NestJS Pagination formatı: { data: [...], total: ... }
                     providersList = response.data;
                 } else if (response && response.data && Array.isArray(response.data.data)) {
-                    // Axios formatı: { data: { data: [...] } }
                     providersList = response.data.data;
                 } else if (Array.isArray(response)) {
-                    // Birbaşa massiv formatı: [...]
                     providersList = response;
                 }
 
-                console.log("Siyahıya əlavə ediləcək ustalar:", providersList);
-                
+                // Average Rating-ə görə çoxdan aza doğru sıralayırıq
+                providersList.sort((a, b) => {
+                    const ratingA = a.averageRating ? Number(a.averageRating) : 0;
+                    const ratingB = b.averageRating ? Number(b.averageRating) : 0;
+                    return ratingB - ratingA;
+                });
+
                 if (providersList.length === 0) {
                     setError("Bazada heç bir usta tapılmadı. Zəhmət olmasa Swagger-dən 'seed' edin.");
                 } else {
@@ -84,38 +82,52 @@ export function Step2Professional({ selectedProfessional, onSelect }: Step2Profe
                 <p className="text-sm text-foreground/60">Sizə xidmət göstərəcək mütəxəssisi seçin.</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {providers.map((prof) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {providers.map((prof: any, index: number) => {
                     const isSelected = selectedProfessional?.id === prof.id;
-                    
+                    const rating = prof.averageRating ? Number(prof.averageRating) : 0;
+                    const isTopRated = index === 0 && rating > 0;
+
                     return (
                         <motion.div
                             key={prof.id}
-                            whileHover={{ y: -5, borderColor: "rgba(234, 179, 8, 0.5)" }}
+                            whileHover={{ y: -6, scale: 1.01 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => onSelect(prof)}
+                            onClick={() => onSelect(prof as Professional)}
                             className={`
-                                relative flex flex-col p-6 rounded-2xl border transition-all duration-300 cursor-pointer
-                                ${isSelected 
-                                    ? "bg-primary-50 dark:bg-primary-500/10 border-primary-500 shadow-[0_0_20px_rgba(234,179,8,0.15)]" 
-                                    : "bg-background border-border/60 hover:bg-zinc-50 dark:hover:bg-white/[0.03]"}
+                                relative flex flex-col p-6 rounded-[2rem] border transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-xl group
+                                ${isSelected
+                                    ? "bg-primary-50 dark:bg-primary-500/10 border-primary-500 shadow-[0_0_25px_rgba(234,179,8,0.2)]"
+                                    : "bg-background/80 border-border/60 hover:shadow-xl hover:border-white/20 dark:hover:bg-white/[0.04]"}
                             `}
                         >
-                            {isSelected && (
-                                <div className="absolute top-4 right-4">
-                                    <div className="bg-primary-500 rounded-full p-1">
-                                        <Star className="w-3 h-3 text-white dark:text-black fill-current" />
+                            {/* Antigravity glow effect on hover */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                            {/* Top Rated Badge */}
+                            {isTopRated && (
+                                <div className="absolute top-0 right-0 z-20">
+                                    <div className="bg-gradient-to-r from-yellow-400 to-amber-500 px-3 py-1.5 rounded-bl-3xl rounded-tr-[2rem] text-[10px] font-black text-black uppercase tracking-wider shadow-[0_0_20px_rgba(251,191,36,0.6)] flex items-center gap-1.5 border-b border-l border-amber-300/50">
+                                        <Award className="w-3.5 h-3.5" /> Top Rated
                                     </div>
                                 </div>
                             )}
 
-                            <div className="flex items-center gap-4">
-                                <div className="h-16 w-16 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-border/40 overflow-hidden flex-shrink-0">
+                            {isSelected && !isTopRated && (
+                                <div className="absolute top-4 right-4 z-20">
+                                    <div className="bg-primary-500 rounded-full p-1.5 shadow-[0_0_15px_rgba(234,179,8,0.5)]">
+                                        <Check className="w-3.5 h-3.5 text-white dark:text-black" />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex items-start gap-4 relative z-10 w-full">
+                                <div className="h-16 w-16 rounded-full bg-zinc-100 dark:bg-zinc-800 border-[3px] border-white dark:border-zinc-700/50 overflow-hidden flex-shrink-0 shadow-inner group-hover:border-primary-200 dark:group-hover:border-primary-500/30 transition-colors">
                                     {prof.profileImageUrl ? (
-                                        <img 
-                                            src={prof.profileImageUrl.startsWith('http') ? prof.profileImageUrl : `http://localhost:3001/${prof.profileImageUrl}`} 
-                                            alt={prof.name} 
-                                            className="h-full w-full object-cover" 
+                                        <img
+                                            src={prof.profileImageUrl.startsWith('http') ? prof.profileImageUrl : `http://localhost:3001/${prof.profileImageUrl}`}
+                                            alt={prof.name}
+                                            className="h-full w-full object-cover"
                                         />
                                     ) : (
                                         <div className="h-full w-full flex items-center justify-center">
@@ -123,26 +135,22 @@ export function Step2Professional({ selectedProfessional, onSelect }: Step2Profe
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex flex-col">
-                                    <h3 className="font-bold text-lg text-foreground leading-tight">
+
+                                <div className="flex flex-col flex-1 min-w-0 pr-8">
+                                    <h3 className="font-bold text-lg text-foreground leading-tight truncate">
                                         {prof.name}
                                     </h3>
-                                    <p className="text-sm text-primary-600 dark:text-primary-500 font-medium">
+                                    <p className="text-[11px] text-primary-600 dark:text-primary-500 font-bold tracking-widest uppercase mt-1 opacity-80">
                                         {prof.title || "Usta"}
                                     </p>
-                                </div>
-                            </div>
 
-                            <div className="mt-4 pt-4 border-t border-border/60 flex items-center justify-between">
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] uppercase text-foreground/50 tracking-wider">Təcrübə</span>
-                                    <span className="text-xs font-medium text-foreground/80">Peşəkar</span>
-                                </div>
-                                <div className="text-right">
-                                    <span className="text-[10px] uppercase text-foreground/50 tracking-wider">Status</span>
-                                    <span className="text-xs text-green-600 dark:text-green-500 flex items-center gap-1 justify-end font-medium">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Aktiv
-                                    </span>
+                                    {/* Rating Display */}
+                                    <div className="flex items-center gap-1.5 mt-2.5">
+                                        <Star className={`w-4 h-4 ${rating > 0 ? "fill-yellow-500 text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.6)]" : "text-zinc-300 dark:text-zinc-600"}`} />
+                                        <span className={`text-[13px] font-black ${rating > 0 ? "text-yellow-600 dark:text-yellow-500" : "text-zinc-400 dark:text-zinc-500"}`}>
+                                            {rating > 0 ? rating.toFixed(1) : "New"}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>
