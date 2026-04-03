@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
+}
+
+@layer base {
+
+  /* LIGHT MODE: Premium Lüks (Təmiz Ağ, Mütləq Qara və Şampan Qızılı) */
+  :root {
+    --background: #FFFFFF;
+    /* Tam təmiz premium ağ */
+    --foreground: #000000;
+    /* Mətn üçün mütləq Qara */
+    --card: #FFFFFF;
+    --border: #EAE7E2;
+
+    /* Zərif Şampan Qızılı Palitra */
+    --primary-50: #fbf9f4;
+    --primary-100: #f5eedf;
+    --primary-200: #ead9b9;
+    --primary-300: #dfc494;
+    --primary-400: #ceaa65;
+    --primary-500: #C5A059;
+    /* Əsas Premium Şampan */
+    --primary-600: #ab8542;
+    /* Hover (üzərinə gələndə) */
+    --primary-700: #886532;
+    --primary-800: #71522e;
+    --primary-900: #5c4428;
+    --primary-950: #352514;
+  }
+
+  /* DARK MODE: İsti Kömür və Açıq Bej */
+  .dark {
+    --background: #111111;
+    /* Çox tünd lüks qara */
+    --foreground: #FAFAFA;
+    /* Yumşaq ağ */
+    --card: #1A1A1A;
+    --border: #2A2A2A;
+
+    /* Qaranlıqda parlayan zərif Qızılı */
+    --primary-50: #fbf9f4;
+    --primary-100: #f5eedf;
+    --primary-200: #ead9b9;
+    --primary-300: #dfc494;
+    --primary-400: #d8ba78;
+    --primary-500: #D4AF37;
+    /* Əsas Premium Qızılı */
+    --primary-600: #ac8a21;
+    --primary-700: #816415;
+    --primary-800: #695013;
+    --primary-900: #574112;
+    --primary-950: #332407;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground transition-colors duration-500 ease-in-out;
+  }
+}
